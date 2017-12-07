@@ -5,7 +5,7 @@ import java.util.Scanner;
 
 public class EmptyMap {
     public static void main(String[] args)throws Exception {
-        visualize("AL.txt");
+        visualize("AK.txt");
     }
 
     public static void visualize(String fileName) throws Exception{
@@ -46,7 +46,7 @@ public class EmptyMap {
                 for (int y = 0; y < points.size(); y++) {
                     Double[] point1 = points.remove();
                     Double[] point2 = points.peek();
-                    StdDraw.line(point1[0], point2[0], point1[1], point2[1]);
+                    StdDraw.line(point1[0], point1[1], point2[0], point2[1]);
                     System.out.println("line drawn" + y);
                     points.add(point1);
                 }
@@ -55,5 +55,6 @@ public class EmptyMap {
         inputObject.close();
         StdDraw.enableDoubleBuffering();
         StdDraw.show();
+        System.out.println("Done!");
     }
 }
