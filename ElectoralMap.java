@@ -5,9 +5,7 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 public class ElectionMap {
-    private static HashMap<String, ArrayList<SubRegion>> subRegions = new HashMap<>();
-    private int regionsNum;
-    private String[] regionKeys;
+    private static HashMap<String, HashMap<String, ArrayList<SubRegion>>> subRegions = new HashMap<>();
 
     public class SubRegion {
         private String name;
@@ -33,10 +31,10 @@ public class ElectionMap {
 
     public static void main(String[] args) throws Exception{
         ElectionMap thisMap = new ElectionMap();
-        thisMap.getLocations("USA.txt");
+        thisMap.visualize("USA-county", "2016");
     }
 
-    public void getLocations(String region, String year) throws Exception {
+    public void visualize(String region, String year) throws Exception{
         File f = new File("inputs/" + region +".txt");
         Scanner inputObject = new Scanner(f);
         double[] bounds = new double[4];
@@ -48,20 +46,28 @@ public class ElectionMap {
         StdDraw.setCanvasSize((((int) bounds[0] - (int) bounds[2]) * (512)) / ((int) bounds[1] - (int) bounds[3]), 512);
         StdDraw.setXscale(bounds[0], bounds[2]);
         StdDraw.setYscale(bounds[1], bounds[3]);
-        regionsNum = Integer.parseInt(inputObject.nextLine());
-        regionKeys = new String[regionsNum];
+        int regionsNum = Integer.parseInt(inputObject.nextLine());
         for (int i = 0; i < regionsNum; i++) {
             inputObject.nextLine();
             String subName = inputObject.nextLine();
-            regionKeys[i] = subName;
-            if (subRegions.containsKey(subName)) {
-                subRegions.get(subName).add(new SubRegion(subName));
+            String supName = inputObject.nextLine();
+            subName.toLowerCase();
+            supName.toLowerCase();
+            if (subRegions.containsKey(supName)) {
+                if (subRegions.get(supName).containsKey(subName)) {
+                    subRegions.get(supName).get(subName).add(new SubRegion(subName));
+                } else {
+                    ArrayList<SubRegion> subList = new ArrayList<>();
+                    subList.add(new SubRegion(subName));
+                    subRegions.get(supName).put(subName, subList);
+                }
             } else {
-                ArrayList<SubRegion> currentSub = new ArrayList<>();
-                currentSub.add(new SubRegion(subName));
-                subRegions.put(subName, currentSub);
+                HashMap<String, ArrayList<SubRegion>> subMap = new HashMap<>();
+                ArrayList<SubRegion> subList = new ArrayList<>();
+                subList.add(new SubRegion(subName));
+                subMap.put(subName, subList);
+                subRegions.put(supName, subMap);
             }
-            inputObject.nextLine();
             int pointsNum = Integer.parseInt(inputObject.nextLine());
             double[] pointsX = new double[pointsNum];
             double[] pointsY = new double[pointsNum];
@@ -70,34 +76,39 @@ public class ElectionMap {
                 pointsY[z] = inputObject.nextDouble();
                 inputObject.nextLine();
             }
-            subRegions.get(subName).get(subRegions.get(subName).size() - 1).xCoords = pointsX;
-            subRegions.get(subName).get(subRegions.get(subName).size() - 1).yCoords = pointsY;
-
-            StdDraw.polygon(subRegions.get(subName).get(subRegions.get(subName).size() - 1).xCoords, subRegions.get(subName).get(subRegions.get(subName).size() - 1).yCoords);
+            subRegions.get(supName).get(subName).get(subRegions.get(supName).get(subName).size() - 1).xCoords = pointsX;
+            subRegions.get(supName).get(subName).get(subRegions.get(supName).get(subName).size() - 1).yCoords = pointsY;
+            // StdDraw.filledPolygon(subRegions.get(supName).get(subName).get(subRegions.get(supName).get(subName).size() - 1).xCoords, subRegions.get(supName).get(subName).get(subRegions.get(supName).get(subName).size() - 1).yCoords);
         }
         inputObject.close();
-    }
-
-    public void getColors(String fileName) throws  Exception{
-        File f = new File("inputs/" + fileName);
-        Scanner inputObject = new Scanner(f);
-        inputObject.nextLine();
-        inputObject.useDelimiter(",");
-        for(int i = 0; i < regionsNum; i++) {
-            String regionName = inputObject.next();
-            int[] votes = {inputObject.nextInt(), inputObject.nextInt(), inputObject.nextInt()};
+        for (String key:subRegions.keySet()) {
+            File f2 = new File("inputs/" + key + year + ".txt");
+            inputObject = new Scanner(f2);
+            inputObject.useDelimiter(",");
             inputObject.nextLine();
-            for (int y = 0; y < subRegions.get(regionName).size(); y++) {
-                subRegions.get(regionName).get(y).votes = votes;
-                subRegions.get(regionName).get(y).setColor();
-                visualize();
+            while (inputObject.hasNextLine()) {
+                String regionName = inputObject.next();
+                int[] votes = {inputObject.nextInt(), inputObject.nextInt(), inputObject.nextInt()};
+                inputObject.nextLine();
+                if (subRegions.get(key).containsKey(regionName)) {
+                } else if (subRegions.get(key).containsKey(regionName + " city")) {
+                    regionName += " city";
+                } else if (subRegions.get(key).containsKey(regionName + " Parish")) {
+                    regionName += " Parish";
+                }
+                //System.out.println(regionName); Debug, prints the last regionName before an error
+                //System.out.println(key); Debug, prints the last key before an error. 
+                for (int i = 0; i < subRegions.get(key).get(regionName).size(); i++) {
+                    subRegions.get(key).get(regionName).get(i).votes = votes;
+                    subRegions.get(key).get(regionName).get(i).setColor();
+                    StdDraw.setPenColor(subRegions.get(key).get(regionName).get(i).color);
+                    StdDraw.filledPolygon(subRegions.get(key).get(regionName).get(i).xCoords, subRegions.get(key).get(regionName).get(i).yCoords);
+                    StdDraw.show();
+                }
             }
         }
-    }
-
-    public void visualize() {
-        for (int i = 0;)
-        StdDraw.setPenColor();
-        StdDraw.filledPolygon();
+        inputObject.close();
+        StdDraw.show();
+        System.out.println("Done!");
     }
 }
