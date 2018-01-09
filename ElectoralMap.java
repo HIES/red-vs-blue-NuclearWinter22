@@ -31,11 +31,17 @@ public class ElectionMap {
 
     public static void main(String[] args) throws Exception{
         ElectionMap thisMap = new ElectionMap();
-        thisMap.visualize("USA-county", "2016");
+        //thisMap.visualize("USA-county", "2016");
+        String region = "USA-county";
+        String year = "1960";
+        thisMap.getGeoData(region);
+        thisMap.getVoteData(year);
+        thisMap.newVisualize();
     }
 
-    public void visualize(String region, String year) throws Exception{
-        File f = new File("inputs/" + region +".txt");
+
+    public void getGeoData(String region) throws Exception {
+        File f = new File("inputs/" + region + ".txt");
         Scanner inputObject = new Scanner(f);
         double[] bounds = new double[4];
         for (int i = 0; i < 4; i += 2) {
@@ -51,8 +57,8 @@ public class ElectionMap {
             inputObject.nextLine();
             String subName = inputObject.nextLine();
             String supName = inputObject.nextLine();
-            subName.toLowerCase();
-            supName.toLowerCase();
+            subName = subName.toLowerCase();
+            supName = supName.toLowerCase();
             if (subRegions.containsKey(supName)) {
                 if (subRegions.get(supName).containsKey(subName)) {
                     subRegions.get(supName).get(subName).add(new SubRegion(subName));
@@ -78,37 +84,61 @@ public class ElectionMap {
             }
             subRegions.get(supName).get(subName).get(subRegions.get(supName).get(subName).size() - 1).xCoords = pointsX;
             subRegions.get(supName).get(subName).get(subRegions.get(supName).get(subName).size() - 1).yCoords = pointsY;
-            // StdDraw.filledPolygon(subRegions.get(supName).get(subName).get(subRegions.get(supName).get(subName).size() - 1).xCoords, subRegions.get(supName).get(subName).get(subRegions.get(supName).get(subName).size() - 1).yCoords);
         }
         inputObject.close();
-        for (String key:subRegions.keySet()) {
+    }
+
+    public void getVoteData(String year) throws Exception {
+        for (String key : subRegions.keySet()) {
             File f2 = new File("inputs/" + key + year + ".txt");
-            inputObject = new Scanner(f2);
+            Scanner inputObject = new Scanner(f2);
             inputObject.useDelimiter(",");
             inputObject.nextLine();
             while (inputObject.hasNextLine()) {
                 String regionName = inputObject.next();
+                regionName = regionName.toLowerCase();
                 int[] votes = {inputObject.nextInt(), inputObject.nextInt(), inputObject.nextInt()};
                 inputObject.nextLine();
                 if (subRegions.get(key).containsKey(regionName)) {
                 } else if (subRegions.get(key).containsKey(regionName + " city")) {
                     regionName += " city";
-                } else if (subRegions.get(key).containsKey(regionName + " Parish")) {
-                    regionName += " Parish";
+                } else if (subRegions.get(key).containsKey(regionName + " parish")) {
+                    regionName += " parish";
                 }
-                //System.out.println(regionName); Debug, prints the last regionName before an error
-                //System.out.println(key); Debug, prints the last key before an error. 
-                for (int i = 0; i < subRegions.get(key).get(regionName).size(); i++) {
-                    subRegions.get(key).get(regionName).get(i).votes = votes;
-                    subRegions.get(key).get(regionName).get(i).setColor();
-                    StdDraw.setPenColor(subRegions.get(key).get(regionName).get(i).color);
-                    StdDraw.filledPolygon(subRegions.get(key).get(regionName).get(i).xCoords, subRegions.get(key).get(regionName).get(i).yCoords);
-                    StdDraw.show();
+                System.out.println(regionName);
+                System.out.println(key);
+                if (subRegions.get(key).containsKey(regionName)) {
+                    for (int i = 0; i < subRegions.get(key).get(regionName).size(); i++) {
+                        System.out.println(i);
+                        subRegions.get(key).get(regionName).get(i).votes = votes;
+                        subRegions.get(key).get(regionName).get(i).setColor();
+                    }
+                    if (subRegions.get(key).containsKey(regionName + " city")) {
+                        for (int i = 0; i < subRegions.get(key).get(regionName + " city").size(); i++) {
+                            subRegions.get(key).get(regionName + " city").get(i).votes = votes;
+                            subRegions.get(key).get(regionName + " city").get(i).setColor();
+                        }
+                    }
+                }
+            }
+            inputObject.close();
+        }
+
+    }
+
+    public void newVisualize() {
+        for (String supKey : subRegions.keySet()) {
+            for (String subKey : subRegions.get(supKey).keySet()) {
+                for (int i = 0; i < subRegions.get(supKey).get(subKey).size(); i++) {
+                    if (subRegions.get(supKey).get(subKey).get(i).color != null) {
+                        StdDraw.setPenColor(subRegions.get(supKey).get(subKey).get(i).color);
+                        StdDraw.filledPolygon(subRegions.get(supKey).get(subKey).get(i).xCoords, subRegions.get(supKey).get(subKey).get(i).yCoords);
+                        StdDraw.show();
+                    } else {
+                        System.out.println(supKey + " " + subKey);
+                    }
                 }
             }
         }
-        inputObject.close();
-        StdDraw.show();
-        System.out.println("Done!");
+
     }
-}
